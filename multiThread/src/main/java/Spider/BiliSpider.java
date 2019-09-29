@@ -1,14 +1,18 @@
 package Spider;
 
+import Main.BiliSpiderMain;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import common.MybatisUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @ClassName:BiliSpider
@@ -16,45 +20,76 @@ import java.net.URL;
  * @Date: 2019/9/21 14:38
  * @Description:
  */
-public class BiliSpider implements Runnable{
+public class BiliSpider implements Runnable {
     private String url;
     private Integer page;
-    public BiliSpider(){
+    private List<String> mediaList;
+
+    public BiliSpider() {
 
     }
-    public BiliSpider(String url,Integer page){
+
+    public BiliSpider(String url, Integer page) {
         this.url = url;
         this.page = page;
+        this.mediaList = new ArrayList<>();
     }
 
     @Override
     public void run() {
         URL realUrl;
         HttpURLConnection connection;
-        StringBuffer stringBuffer = new StringBuffer(url);
-        if (page == 146){
-            System.out.println("开始爬取番剧类型数据");
+        StringBuffer urlBuffer = new StringBuffer(url);
+        switch (page) {
+            case 146:
+                System.out.println("begin gather cartoon mediaId list");
+                break;
+            case 69:
+                System.out.println("begin gather movie mediaId list");
+                break;
+            case 145:
+                System.out.println("begin gather documentaty mediaId list");
+                break;
+            case 29:
+                System.out.println("begin gather demestic mediaId list");
+                break;
+            case 124:
+                System.out.println("begin gather TV drama mediaId list");
+                break;
+            default:
+                System.out.println("There is no matching page ");
         }
-        for (int i=page;i>145;i--){
-            stringBuffer.append(i);
+        for (int i = page; i > 0; i--) {
+            urlBuffer.append(i);
             try {
-                realUrl = new URL(stringBuffer.toString());
+                realUrl = new URL(urlBuffer.toString());
                 connection = (HttpURLConnection) realUrl.openConnection();
                 connection.connect();
-                BufferedReader bufferedReader= new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                StringBuffer stringBuffer1 = new StringBuffer();
-                String str;
-                while ( (str = bufferedReader.readLine()) != null) {
-                    stringBuffer1.append(str);
-                    System.out.println(str);
-                }
-                System.out.println(getMediaId(stringBuffer1.toString()));
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                StringBuffer resources = new StringBuffer();
+                resources.append(bufferedReader.readLine());
+                addToList(resources.toString());
+                resources.setLength(0);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            stringBuffer.delete(87,stringBuffer.length());
+            urlBuffer.delete(87, urlBuffer.length());
+        }
+        synchronized (BiliSpiderMain.threadCount) {
+            int i = MybatisUtil.sqlSession.insert("insertBatchMediaId", mediaList);
+            System.out.println("Finish collection,a total of " + i + "mediaId were obtained,mediaListSIZE" + mediaList.size());
+            BiliSpiderMain.threadCount--;
+        }
+    }
+
+
+    public void addToList(String response) {
+        JSONArray data = JSONObject.parseObject(response).getJSONObject("data").getJSONArray("list");
+        for (Object object : data) {
+            JSONObject info = (JSONObject) object;
+            mediaList.add(info.get("media_id").toString());
         }
     }
 
@@ -72,9 +107,5 @@ public class BiliSpider implements Runnable{
 
     public void setPage(Integer page) {
         this.page = page;
-    }
-    public static String[] getMediaId(String string){
-
-        return null;
     }
 }

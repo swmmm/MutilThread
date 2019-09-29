@@ -6,13 +6,34 @@
     <select id="getList" resultType="java.lang.String">
         select url from video_resources
     </select>
+    <select id="getMediaIds" resultType="String">
+        select media_id from video_resources_bili
+    </select>
     <insert id="insertBatch" parameterType="java.util.List">
-        insert  into video_resources (url) values 
+        insert  into video_resources (url) values
         <foreach collection="list" separator="," item="item" index="index">
             (#{item})
         </foreach>
     </insert>
-    <insert id="insert" parameterType="java.lang.String">
+    <insert id="insertBatchMediaId" parameterType="java.util.List">
+        insert  into video_resources_bili (media_id) values
+        <foreach collection="list" separator="," item="item" index="index">
+            (#{item})
+        </foreach>
+    </insert>
+    <insert id="insert" parameterType="entity.Res">
+        <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
         insert into video_resources (url)values (#{url})
+    </insert>
+    <select id="select" resultType="java.lang.Integer">
+        select id from video_resources order by id desc limit 1
+    </select>
+    <insert id="insertBatchDetail" parameterType="java.util.List">
+        insert  into bili_video(media_id,title,origin_name,alias,actors,cover,evaluate,publish_date,status,staff,type) values
+        <foreach collection="list" separator="," item="item" index="index">
+            (#{item.mediaId},#{item.title},#{item.originName},#{item.alias},#{item.actors},#{item.cover},#{item.evaluate},#{item.publishDate},#{item.status},#{item.staff},#{item.type})
+        </foreach>
     </insert>
 </mapper>

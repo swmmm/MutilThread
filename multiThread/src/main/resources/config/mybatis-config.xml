@@ -4,6 +4,11 @@
         "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
     <properties resource="jdbc.properties"></properties>
+    <!--<plugins>-->
+        <!--<plugin interceptor="com.github.pagehelper.PageInterceptor">-->
+            <!--<property name="reasonable" value="true"/>-->
+        <!--</plugin>-->
+    <!--</plugins>-->
     <environments default="dp">
         <environment id="dp">
             <transactionManager type="JDBC"></transactionManager>
@@ -18,9 +23,4 @@
     <mappers>
         <mapper resource="mapper/videoResourcesMapper.xml"/>
     </mappers>
-    <plugins>
-        <plugin interceptor="com.github.pagehelper.PageInterceptor">
-            <property name="reasonable" value="true"/>
-        </plugin>
-    </plugins>
 </configuration>

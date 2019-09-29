@@ -1,3 +1,4 @@
+import entity.Res;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -31,14 +32,20 @@ public class MybatisTest {
             e.printStackTrace();
         }
         SqlSession sqlSession=sqlSessionFactory.openSession();
-        sqlSession.insert("videoResourcesMapper.insert","abcd1");
-        sqlSession.insert("videoResourcesMapper.insert","abcd2");
+        Res res = new Res();
+        res.setUrl("bbbbb");
+        sqlSession.insert("videoResourcesMapper.insert",res);
+        System.out.println(res.getId());
+        System.out.println((Object)sqlSession.selectOne("videoResourcesMapper.select"));
+//        sqlSession.insert("videoResourcesMapper.insert","abcd2");
         sqlSession.commit();
-        sqlSession.insert("videoResourcesMapper.insert","abcd3");
-        List list = sqlSession.selectList("videoResourcesMapper.getList");
-        for (Object s :list){
-            System.out.println(s);
-        }
+        System.out.println((Object)sqlSession.selectOne("videoResourcesMapper.select"));
+//        sqlSession.insert("videoResourcesMapper.insert","abcd3");
+//        List list = sqlSession.selectList("videoResourcesMapper.getList");
+//        for (Object s :list){
+//            System.out.println(s);
+//        }
         sqlSession.close();
     }
 }
+

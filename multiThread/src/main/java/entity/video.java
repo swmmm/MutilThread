@@ -4,12 +4,12 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * @ClassName: video
+ * @ClassName: Video
  * @description:
  * @author: swm
  * @create: 2019-09-23 08:54
  **/
-public class video {
+public class Video {
     private Integer id;
     private String title;
     private String actors;
@@ -24,7 +24,6 @@ public class video {
     private String staff;
     private List<Style> styles;
     private Type type;
-
 
 }
 class Type{
