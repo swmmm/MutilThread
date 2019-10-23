@@ -26,7 +26,6 @@ import java.util.Set;
 public class Main {
     public static Integer threadCount = 0;
     public static SqlSession sqlSession = MybatisUtil.sqlSession;
-
     public static void main(String[] args) throws IOException, InterruptedException {
         boolean unfinish = true;
         int lastIndex = 1194;
