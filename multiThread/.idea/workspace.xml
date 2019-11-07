@@ -5,15 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b08ffc63-eb79-4129-a269-4ab3a1d11938" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/Main/MultiThreadExercises.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/Main/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/Area.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/Main/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Main/Main.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/Pojo.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/Style.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/Type.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Main/GetDetailMain.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main/GetDetailMain.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -61,7 +54,7 @@
     <property name="SearchEverywhereHistoryKey" value="StringBuf&#9;FILE&#9;jar://C:/Program Files/Java/jdk1.8.0_181/src.zip!/java/lang/StringBuffer.java&#10;Atomicre&#9;PSI&#9;JAVA://java.util.concurrent.atomic.AtomicReference&#10;TreeSet&#9;PSI&#9;JAVA://java.util.TreeSet&#10;URL&#9;PSI&#9;JAVA://java.net.URL&#10;Vecto&#9;PSI&#9;JAVA://java.util.Vector&#10;Map&#9;PSI&#9;JAVA://java.util.Map&#10;HashTable&#9;PSI&#9;JAVA://java.util.Hashtable&#10;ThreadL&#9;PSI&#9;JAVA://java.lang.ThreadLocal&#10;Objec&#9;PSI&#9;JAVA://java.lang.Object&#10;JS&#9;FILE&#9;jar://D:/mavenrepo/com/alibaba/fastjson/1.2.3/fastjson-1.2.3.jar!/com/alibaba/fastjson/JSONObject.class" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../../Git/gzpt/gf/gf_mall/Mall" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
     <property name="project.structure.last.edited" value="Problems" />
@@ -216,6 +209,8 @@
       <workItem from="1571119885732" duration="3736000" />
       <workItem from="1571272763916" duration="3850000" />
       <workItem from="1571361067843" duration="23000" />
+      <workItem from="1571818924625" duration="432000" />
+      <workItem from="1572222527724" duration="5757000" />
     </task>
     <servers />
   </component>

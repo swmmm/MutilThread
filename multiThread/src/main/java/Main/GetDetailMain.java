@@ -36,7 +36,6 @@ public class GetDetailMain {
         }else {
             threadCount = ids.size() / 300;
         }
-
         for (int i = 0; i < threadCount; i++) {
             int fromIndex = i * 300;
             int toIndex = fromIndex + 300;
