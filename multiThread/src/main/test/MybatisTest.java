@@ -32,19 +32,8 @@ public class MybatisTest {
             e.printStackTrace();
         }
         SqlSession sqlSession=sqlSessionFactory.openSession();
-        Res res = new Res();
-        res.setUrl("bbbbb");
-        sqlSession.insert("videoResourcesMapper.insert",res);
-        System.out.println(res.getId());
-        System.out.println((Object)sqlSession.selectOne("videoResourcesMapper.select"));
-//        sqlSession.insert("videoResourcesMapper.insert","abcd2");
-        sqlSession.commit();
-        System.out.println((Object)sqlSession.selectOne("videoResourcesMapper.select"));
-//        sqlSession.insert("videoResourcesMapper.insert","abcd3");
-//        List list = sqlSession.selectList("videoResourcesMapper.getList");
-//        for (Object s :list){
-//            System.out.println(s);
-//        }
+        System.out.println((Object) sqlSession.selectOne("videoResourcesMapper.select"));
+
         sqlSession.close();
     }
 }

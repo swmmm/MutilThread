@@ -27,8 +27,8 @@
         </selectKey>
         insert into video_resources (url)values (#{url})
     </insert>
-    <select id="select" resultType="java.lang.Integer">
-        select id from video_resources order by id desc limit 1
+    <select id="select" resultType="java.lang.Object">
+        select name from style
     </select>
     <insert id="insertBatchDetail" parameterType="java.util.List">
         insert  into bili_video(media_id,title,origin_name,alias,actors,cover,evaluate,publish_date,status,staff,type) values
