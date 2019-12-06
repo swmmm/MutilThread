@@ -12,7 +12,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @ClassName: MybatisTest
@@ -32,8 +34,14 @@ public class MybatisTest {
             e.printStackTrace();
         }
         SqlSession sqlSession=sqlSessionFactory.openSession();
-        System.out.println((Object) sqlSession.selectOne("videoResourcesMapper.select"));
-
+        Map<String,Object> map = new HashMap<>();
+        map.put("mediaId",11);
+        map.put("styleId",11);
+        map.put("styleName","aaa");
+        List<Object> list  = new ArrayList<>();
+        list.add(map);
+        System.out.println((Object) sqlSession.insert("videoResourcesMapper.insertVideoStyle",list));
+        sqlSession.commit();
         sqlSession.close();
     }
 }

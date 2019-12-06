@@ -7,14 +7,14 @@ package entity;
  * @create: 2019-09-26 16:25
  **/
 public class Res {
-    private int id;
+    private Integer id;
     private String url;
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

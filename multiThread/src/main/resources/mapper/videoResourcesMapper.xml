@@ -36,4 +36,18 @@
             (#{item.mediaId},#{item.title},#{item.originName},#{item.alias},#{item.actors},#{item.cover},#{item.evaluate},#{item.publishDate},#{item.status},#{item.staff},#{item.type})
         </foreach>
     </insert>
+
+    <insert id="insertVideos" parameterType="java.util.List">
+        insert into video(media_id,name,title,alias,actors,staff,cover,brief,publish_date,area_id,area_name,type_id,type_name,status)values
+        <foreach collection="list" separator="," item="item" index="index">
+            (#{item.mediaId},#{item.name},#{item.title},#{item.alias},#{item.actors},#{item.staff},#{item.cover},#{item.brief},#{item.publishDate},#{item.areaId},#{item.areaName},#{item.typeId},#{item.typeName},#{item.status})
+        </foreach>
+    </insert>
+
+    <insert id="insertVideoStyle" parameterType="java.util.List">
+        insert into video_style(video_id,style_id,style_name) values
+        <foreach collection="list" separator="," item="item" index="index">
+            (#{item.mediaId},#{item.styleId},#{item.styleName})
+        </foreach>
+    </insert>
 </mapper>

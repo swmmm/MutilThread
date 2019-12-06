@@ -1,19 +1,22 @@
 package Main;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import common.MybatisUtil;
+import org.apache.ibatis.session.SqlSession;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @ClassName:BiliSpiderMain
@@ -22,12 +25,13 @@ import java.util.Map;
  * @Description:
  */
 public class BiliSpiderMain {
-    public static Integer threadCount = 0;
-    private static List<String> mediaIds = new ArrayList<>();
-    private static List<Map<String, Object>> data = new ArrayList<>();
+    public static Integer threadCount = 25;
+    private static ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+    private static ThreadPoolExecutor pool = (ThreadPoolExecutor) executorService;
+    private static SqlSession sqlSession = MybatisUtil.sqlSession;
+    private static List<String> aimUrls = new ArrayList<>();
 
-    public static void main(String[] args) throws InterruptedException {
-        List<String> aimUrls = new ArrayList<>();
+    static {
         //cartoon mediaId list
         aimUrls.add("https://api.bilibili.com/pgc/season/index/result?season_type=1&pagesize=20&type=1&page=");
         //movie mediaId list
@@ -38,143 +42,135 @@ public class BiliSpiderMain {
         aimUrls.add("https://api.bilibili.com/pgc/season/index/result?season_type=4&pagesize=20&type=1&page=");
         //TV drama mediaId list
         aimUrls.add("https://api.bilibili.com/pgc/season/index/result?season_type=5&pagesize=20&type=1&page=");
+    }
 
 
-
-        //获取全部mediaID
-        for (String url : aimUrls) {
-            new Thread(() -> {
-                //启动一个新线程开始获取mediaId
-                synchronized (threadCount) {
-                    threadCount++;
-                    System.out.println(Thread.currentThread().getName() + "启动");
-                }
-                List<String> tempMID = new ArrayList<>();
-                StringBuffer resources = new StringBuffer();
-                int page = 1;
-                StringBuffer stringBuffer = new StringBuffer(url);
-                JSONArray list;
+    public static void main(String[] args) throws Exception {
+        for (String tempUrl : aimUrls) {
+            pool.execute(()->{
+                StringBuffer response = new StringBuffer();
                 JSONObject data;
-                for (; ; ) {
-                    stringBuffer.append(page);
-                    String response = connectGetRes(stringBuffer.toString());
-                    data = JSONObject.parseObject(response).getJSONObject("data");
-                    list = data.getJSONArray("list");
-                    for (Object object : list) {
-                        JSONObject info = (JSONObject) object;
-                        tempMID.add(info.get("media_id").toString());
-                    }
-                    if (data.get("has_next").toString().equals("0")) {
-                        stringBuffer.delete(87, stringBuffer.length());
-                        resources.setLength(0);
-                        page += 1;
-                    } else {
-                        synchronized (threadCount) {
-                            System.out.println(Thread.currentThread().getName() + stringBuffer.toString() + "结束");
-                            System.out.println("mediaID total：  " + tempMID.size());
-                            mediaIds.addAll(tempMID);
-                            threadCount--;
+                StringBuffer pageUrl=new StringBuffer(tempUrl);
+                int page = 1;
+                while (true) {
+                    pageUrl.append(page);
+                    String str = connectGetRes(pageUrl.toString());
+                    pageUrl.delete(87, pageUrl.length());
+                    if (str != null) {//连接成功
+                        response.append(str);
+//                  System.out.println(response.toString());
+                        data = JSON.parseObject(response.toString()).getJSONObject("data");
+                        JSONArray list = data.getJSONArray("list");//数据list
+                        response.setLength(0);//清空response
+                        //每个线程处理一页20个mediaId数据
+                        pool.execute(() -> {
+                            StringBuffer mediaUrl = new StringBuffer("https://api.bilibili.com/pgc/view/web/media?media_id=");
+                            StringBuffer videoInfo = new StringBuffer();
+                            List<Map<String, Object>> infoList = new ArrayList<>();
+                            List<Map<String,String>> videoStyleList = new ArrayList<>();
+                            //循环获取当页meidiaInfo，
+                            for (Object object : list) {
+                                JSONObject jsonObject = (JSONObject) object;
+                                mediaUrl.append(jsonObject.getString("media_id"));
+                                String str1 = connectGetRes(mediaUrl.toString());
+                                mediaUrl.delete(53, mediaUrl.length());
+                                if (str1 != null) {
+                                    videoInfo.append(str1);
+                                    infoList.add(getVideoDetail(videoInfo.toString(),videoStyleList));
+                                    videoInfo.setLength(0);
+                                }
+                            }
+                            //插入一页数据
+                            infoList.forEach(map-> {
+                                if (map.containsKey("videoStyles")) {
+                                    videoStyleList.addAll((Collection<? extends Map<String, String>>) map.get("videoStyles"));
+                                }
+                            });
+                            synchronized (threadCount){
+                                sqlSession.insert("videoResourcesMapper.insertVideos",infoList);
+                                sqlSession.insert("videoResourcesMapper.insertVideoStyle",videoStyleList);
+                                sqlSession.commit();
+                            }
+                        });
+
+                        //判断是否有下一页,1:有 0：无   无则跳出当前循环
+                        if (data.getIntValue("has_next") == 0) {
+                            break;
                         }
-                        break;
                     }
+                    if (page % 10 == 0) {
+                        System.out.println("正在处理"+pageUrl+page);
+                    }
+                    page++;
                 }
-            }
-            ).start();
-        }
-        while (true) {
-            Thread.sleep(1000);
-            if (threadCount == 0) {
-                System.out.println(mediaIds.size());
-                break;
-            }
+            });
         }
 
-        //获取详细信息
-        int fromIndex = 0;
-        int toIndex=200;
-        boolean end =false;
-        while (!end) {
-            if (toIndex>=mediaIds.size()){
-                toIndex=mediaIds.size();
-                end = true;
-            }
-            //每200个mediaID开启一个线程爬取
-            List<String> subMediaIds = mediaIds.subList(fromIndex,toIndex);
-            new Thread(() -> {
-                StringBuffer infoUrl = new StringBuffer("https://api.bilibili.com/pgc/view/web/media?media_id=");
-                List<Map<String, Object>> tempData = new ArrayList<>();
-                synchronized (threadCount) {
-                    threadCount++;
-                    System.out.println(Thread.currentThread().getName() + "启动"+subMediaIds.size());
-                }
-                for (String mediaId : subMediaIds) {
-                    String response = connectGetRes(infoUrl.append(mediaId).toString());
-                    System.out.println(response);
-                    tempData.add(getVideoDetail(response));
-                    infoUrl.delete(53, infoUrl.length());
-                }
-                //爬取结束
-                synchronized (threadCount) {
-                    data.addAll(tempData);
-                    threadCount--;
-                    System.out.println(Thread.currentThread().getName() + "结束"+tempData.size());
-                }
-            }).start();
-            fromIndex=toIndex;
-            toIndex+=10;
+
+        while (pool.getActiveCount() != 0) {
+            System.out.println("线程池中正在执行任务的线程数量" + pool.getActiveCount());
+            System.out.println("线程池任务总数" + pool.getTaskCount());
+            System.out.println("线程池已完成任务数量" + pool.getCompletedTaskCount());
+            Thread.sleep(3000);
         }
+
+        pool.shutdown();
     }
 
     public static String connectGetRes(String url) {
         String response = "";
         try {
-            URL url1 = new URL(url);
-            HttpURLConnection connection = (HttpURLConnection) url1.openConnection();
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setConnectTimeout(2000);
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             response = bufferedReader.readLine();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
+        } catch (SocketTimeoutException ste) {
+            System.out.println(url.toString() + "连接超时");
+            return null;
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println(url.toString() + "连接异常");
+            return null;
         }
         return response;
     }
 
-    public static Map<String, Object> getVideoDetail(String jsonString) {
+    public static Map<String, Object> getVideoDetail(String jsonString,List<Map<String,String>> videoStyleList) {
         Map<String, Object> map = new HashMap<>();
         JSONObject result = JSONObject.parseObject(jsonString).getJSONObject("result");
         JSONObject publish = result.getJSONObject("publish");
-        JSONArray jsonAreas = result.getJSONArray("areas");
-
-        Map<String, String> areas = new HashMap<>();
-        for (int i = 0; i < jsonAreas.size(); i++) {
-            JSONObject jsonObject = jsonAreas.getJSONObject(i);
-            areas.put(result.getString("media_id"), jsonObject.getString("id"));
-        }
-
-        JSONArray jsonStyles = result.getJSONArray("styles");
-        Map<String, String> styles = new HashMap<>();
-        for (int i = 0; i < jsonStyles.size(); i++) {
-            JSONObject jsonObject = jsonStyles.getJSONObject(i);
-            styles.put(result.getString("media_id"), jsonObject.getString("id"));
-        }
-//        map.put("mediaId",Integer.valueOf(result.getString("media_id")));
+        JSONArray areas = result.getJSONArray("areas");
+        JSONArray styles = result.getJSONArray("styles");
+        //获取影片基本信息
         map.put("mediaId", result.getString("media_id"));
+        map.put("name", result.getString("origin_name"));
         map.put("title", result.getString("title"));
-        map.put("actors", result.getString("actors"));
         map.put("alias", result.getString("alias"));
+        map.put("actors", result.getString("actors"));
+        map.put("staff", result.getString("staff"));
         map.put("cover", result.getString("cover"));
-        map.put("evaluate", result.getString("evaluate"));
-        map.put("originName", result.getString("origin_name"));
-//        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-//        Date date = sdf.parse(publish.getString("pub_date"));
-//        map.put("publishDate",date);
+        map.put("brief", result.getString("evaluate"));
         map.put("publishDate", publish.getString("pub_date"));
         map.put("status", publish.getString("time_length_show"));
-        map.put("staff", result.getString("staff"));
-        map.put("type", result.getString("type"));
-        map.put("areas", areas);
-        map.put("styles", styles);
+        //影片关联信息
+        if (areas != null && areas.size() > 0) {
+            map.put("areaId", areas.getJSONObject(0).get("id"));
+            map.put("areaName", areas.getJSONObject(0).get("name"));
+        }
+        map.put("typeId", result.getString("type"));
+        map.put("typeName", result.get("type_name"));
+        //videoStyles
+//        List<Map<String, String>> stylesList = new ArrayList<>();
+        if (styles != null && styles.size() > 0) {
+            for (int i = 0; i < styles.size(); i++) {
+                Map<String, String> map1 = new HashMap<>();
+                JSONObject jsonObject = styles.getJSONObject(i);
+                map1.put("mediaId", result.getString("media_id"));
+                map1.put("styleId", jsonObject.getString("id"));
+                map1.put("styleName", jsonObject.getString("name"));
+                videoStyleList.add(map1);
+            }
+//            map.put("videoStyles", stylesList);
+        }
         return map;
     }
 }
